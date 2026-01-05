@@ -1,0 +1,96 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model for authentication and account management
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  jobs    Job[]
+  apiKeys ApiKey[]
+}
+
+// API Keys for external services (Gemini, etc.)
+model ApiKey {
+  id        String   @id @default(cuid())
+  userId    String
+  service   String // "gemini", "openai", etc.
+  key       String // Encrypted
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, service])
+}
+
+// Job model for tracking background tasks
+model Job {
+  id       String @id @default(cuid())
+  userId   String
+  type     String // "query_generator", "gmaps_scraper", "data_cleaner", etc.
+  status   String @default("pending") // "pending", "running", "completed", "failed", "paused"
+  progress Int    @default(0)
+  total    Int?
+
+  // Input configuration
+  config Json
+
+  // Results
+  result Json?
+  error  String?
+
+  // File storage
+  inputFile  String? // S3/local path
+  outputFile String? // S3/local path
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([createdAt])
+}
+
+// Scraped business data
+model Business {
+  id       String  @id @default(cuid())
+  name     String
+  phone    String?
+  website  String?
+  email    String?
+  rating   Float?
+  reviews  Int?
+  address  String?
+  category String?
+
+  // AI Analysis results
+  issues    String? // JSON array of issues
+  solutions String? // JSON array of solutions
+
+  // Metadata
+  source String // "gmaps", "manual", etc.
+  jobId  String? // Reference to Job that created this
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([website])
+  @@index([email])
+}
