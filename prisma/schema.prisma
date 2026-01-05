@@ -14,6 +14,7 @@ datasource db {
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
+  password      String // Hashed password
   name          String?
   emailVerified DateTime?
   image         String?
@@ -93,4 +94,61 @@ model Business {
 
   @@index([website])
   @@index([email])
+}
+
+// Location data cache (from Geonames API)
+model Country {
+  id          String  @id @default(cuid())
+  geonameId   Int     @unique
+  countryCode String  @unique // "US", "CA", "GB"
+  countryName String // "United States", "Canada"
+  continent   String?
+  capital     String?
+  population  BigInt?
+
+  states State[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([countryCode])
+}
+
+model State {
+  id          String @id @default(cuid())
+  geonameId   Int    @unique
+  stateCode   String // "ID", "NY", "CA"
+  stateName   String // "Idaho", "New York"
+  countryId   String
+  countryCode String
+
+  country Country @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  cities  City[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([countryCode, stateCode])
+  @@index([countryCode])
+}
+
+model City {
+  id          String @id @default(cuid())
+  geonameId   Int    @unique
+  cityName    String
+  stateId     String
+  stateCode   String
+  countryCode String
+  latitude    Float?
+  longitude   Float?
+  population  Int?
+
+  state State @relation(fields: [stateId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([stateCode, cityName, countryCode])
+  @@index([stateCode])
+  @@index([countryCode])
 }

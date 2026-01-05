@@ -1,15 +1,40 @@
-export default function Home() {
+import { auth } from '@/lib/auth';
+import { redirect } from 'next/navigation';
+import Link from 'next/link';
+
+export default async function Home() {
+  const session = await auth();
+
+  if (session) {
+    redirect('/dashboard');
+  }
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50">
       <main className="container mx-auto px-4 py-16">
         <div className="text-center space-y-8">
-          <h1 className="text-5xl font-bold tracking-tight">
-            Welcome to <span className="text-primary">LeadForge</span>
+          <h1 className="text-5xl font-bold tracking-tight text-gray-900">
+            Welcome to <span className="text-blue-600">LeadForge</span>
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             AI-powered B2B lead generation platform that automates the entire workflow
             from query generation to personalized outreach.
           </p>
+
+          <div className="flex justify-center gap-4 mt-8">
+            <Link
+              href="/register"
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+            >
+              Get Started
+            </Link>
+            <Link
+              href="/login"
+              className="px-6 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+            >
+              Sign In
+            </Link>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 max-w-5xl mx-auto">
             <FeatureCard
@@ -42,12 +67,6 @@ export default function Home() {
               description="Track all your jobs and export results at any stage"
               icon="📊"
             />
-          </div>
-
-          <div className="mt-12">
-            <p className="text-sm text-muted-foreground">
-              Project setup complete! Ready to build the features.
-            </p>
           </div>
         </div>
       </main>

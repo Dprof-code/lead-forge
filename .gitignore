@@ -41,3 +41,23 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+
+/generate-search-queries/
+
+# Downloads - generated CSV files
+/public/downloads/*.csv
+!/public/downloads/.gitkeep
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info
+.venv
+venv/
+ENV/
