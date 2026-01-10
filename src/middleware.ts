@@ -6,9 +6,15 @@ export default auth((req) => {
   const isAuthPage =
     req.nextUrl.pathname.startsWith("/login") ||
     req.nextUrl.pathname.startsWith("/register");
-  const isDashboard = req.nextUrl.pathname.startsWith("/dashboard");
+  const isDashboardRoute =
+    req.nextUrl.pathname.startsWith("/dashboard") ||
+    req.nextUrl.pathname.startsWith("/query-generator") ||
+    req.nextUrl.pathname.startsWith("/maps-scraper") ||
+    req.nextUrl.pathname.startsWith("/email-scraper") ||
+    req.nextUrl.pathname.startsWith("/data-cleaner") ||
+    req.nextUrl.pathname.startsWith("/ai-analyzer");
 
-  if (isDashboard && !isLoggedIn) {
+  if (isDashboardRoute && !isLoggedIn) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 

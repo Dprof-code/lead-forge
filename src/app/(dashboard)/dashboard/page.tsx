@@ -1,5 +1,8 @@
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Search, Map, Mail, Sparkles, FileText, Users } from 'lucide-react';
+import Link from 'next/link';
 
 export default async function DashboardPage() {
     const session = await auth();
@@ -9,84 +12,92 @@ export default async function DashboardPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <nav className="bg-white shadow-sm">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between h-16">
-                        <div className="flex items-center">
-                            <h1 className="text-2xl font-bold text-gray-900">LeadForge</h1>
-                        </div>
-                        <div className="flex items-center space-x-4">
-                            <span className="text-sm text-gray-700">
-                                {session.user?.email}
-                            </span>
-                            <form action="/api/auth/signout" method="POST">
-                                <button
-                                    type="submit"
-                                    className="text-sm text-gray-700 hover:text-gray-900"
-                                >
-                                    Sign out
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </nav>
+        <div className="container mx-auto py-8 px-4 max-w-7xl">
+            <div className="mb-8">
+                <h2 className="text-3xl font-bold mb-2">
+                    Welcome back, {session.user?.name || session.user?.email}!
+                </h2>
+                <p className="text-muted-foreground">
+                    Start generating leads with your AI-powered platform
+                </p>
+            </div>
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="mb-8">
-                    <h2 className="text-3xl font-bold text-gray-900">
-                        Welcome back, {session.user?.name || session.user?.email}!
-                    </h2>
-                    <p className="mt-2 text-gray-600">
-                        Start generating leads with your AI-powered platform
-                    </p>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <FeatureCard
+                    title="Query Generator"
+                    description="Generate Google Maps search queries for any business type"
+                    href="/query-generator"
+                    icon={Search}
+                />
+                <FeatureCard
+                    title="Maps Scraper"
+                    description="Scrape business data from Google Maps automatically"
+                    href="/maps-scraper"
+                    icon={Map}
+                />
+                <FeatureCard
+                    title="Email Scraper"
+                    description="Extract and verify email addresses from business websites"
+                    href="/email-scraper"
+                    icon={Mail}
+                />
+                {/* Uncomment as features are built */}
+                {/* <FeatureCard
+                    title="Data Cleaner"
+                    description="Remove duplicates and clean your lead data"
+                    href="/data-cleaner"
+                    icon={Sparkles}
+                /> */}
+                {/* <FeatureCard
+                    title="AI Analyzer"
+                    description="Get AI-powered insights for each prospect"
+                    href="/ai-analyzer"
+                    icon={Sparkles}
+                /> */}
+            </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <FeatureCard
-                        title="Query Generator"
-                        description="Generate Google Maps search queries for any business type"
-                        href="/query-generator"
-                        icon="🔍"
-                    />
-                    <FeatureCard
-                        title="Maps Scraper"
-                        description="Scrape business data from Google Maps automatically"
-                        href="/dashboard/maps-scraper"
-                        icon="🗺️"
-                    />
-                    <FeatureCard
-                        title="Data Cleaner"
-                        description="Remove duplicates and clean your lead data"
-                        href="/dashboard/data-cleaner"
-                        icon="🧹"
-                    />
-                    <FeatureCard
-                        title="Website Separator"
-                        description="Filter businesses with and without websites"
-                        href="/dashboard/website-separator"
-                        icon="🔀"
-                    />
-                    <FeatureCard
-                        title="Email Scraper"
-                        description="Extract email addresses from business websites"
-                        href="/dashboard/email-scraper"
-                        icon="📧"
-                    />
-                    <FeatureCard
-                        title="AI Analyzer"
-                        description="Get AI-powered insights for each prospect"
-                        href="/dashboard/ai-analyzer"
-                        icon="🤖"
-                    />
-                </div>
+            <Card className="mt-8">
+                <CardHeader>
+                    <CardTitle>Recent Activity</CardTitle>
+                    <CardDescription>Your recent jobs and actions</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-muted-foreground">No jobs yet. Start by creating your first query!</p>
+                </CardContent>
+            </Card>
 
-                <div className="mt-8 bg-white rounded-lg shadow p-6">
-                    <h3 className="text-lg font-semibold mb-4">Recent Jobs</h3>
-                    <p className="text-gray-500">No jobs yet. Start by creating your first query!</p>
-                </div>
-            </main>
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Total Leads</CardTitle>
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">0</div>
+                        <p className="text-xs text-muted-foreground">No leads generated yet</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Emails Found</CardTitle>
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">0</div>
+                        <p className="text-xs text-muted-foreground">Start scraping to find emails</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Jobs Completed</CardTitle>
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">0</div>
+                        <p className="text-xs text-muted-foreground">No completed jobs yet</p>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     );
 }
@@ -95,21 +106,28 @@ function FeatureCard({
     title,
     description,
     href,
-    icon,
+    icon: Icon,
 }: {
     title: string;
     description: string;
     href: string;
-    icon: string;
+    icon: React.ElementType;
 }) {
     return (
-        <a
-            href={href}
-            className="block p-6 bg-white rounded-lg shadow hover:shadow-md transition-shadow border border-gray-200"
-        >
-            <div className="text-4xl mb-3">{icon}</div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-            <p className="text-sm text-gray-600">{description}</p>
-        </a>
+        <Link href={href}>
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+                <CardHeader>
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                            <Icon className="h-6 w-6 text-primary" />
+                        </div>
+                        <CardTitle className="text-lg">{title}</CardTitle>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-sm text-muted-foreground">{description}</p>
+                </CardContent>
+            </Card>
+        </Link>
     );
 }

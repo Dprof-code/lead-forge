@@ -5,10 +5,10 @@ An AI-powered platform that automates the entire lead generation and qualificati
 ## 🚀 Features
 
 - **Query Generator** ✅ - Generate Google Maps search queries with cascading location dropdowns (Country → State → City)
-- **Google Maps Scraper** (Coming soon) - Automated business data scraping using Selenium
+- **Google Maps Scraper** ✅ - Automated business data scraping using Selenium
+- **Email Scraper** ✅ - Extract email addresses from business websites (checks multiple pages)
 - **Data Cleaner** (Coming soon) - Remove duplicates and clean lead data automatically
 - **Website Separator** (Coming soon) - Filter businesses with/without websites
-- **Email Scraper** (Coming soon) - Extract email addresses from business websites
 - **AI Website Analyzer** (Coming soon) - Get AI-powered insights using Gemini API
 - **Pipeline Dashboard** (Coming soon) - Track jobs and export results at any stage
 
@@ -127,6 +127,9 @@ For detailed feature information:
 - [Product Requirements Document (PRD)](./PRD.md)
 - [Authentication System](./AUTH_README.md) ✅
 - [Query Generator Feature](./QUERY_GENERATOR_README.md) ✅
+- [Google Maps Scraper](./MAPS_SCRAPER_README.md) ✅
+- [Email Scraper Feature](./EMAIL_SCRAPER_COMPLETE.md) ✅
+- [Email Scraper Quick Start](./EMAIL_SCRAPER_QUICKSTART.md) ✅
 - [Geonames API Setup](./GEONAMES_SETUP.md) - **Required for location dropdowns**
 
 ## 🎯 Feature Status
@@ -136,10 +139,10 @@ For detailed feature information:
 | Authentication      | ✅ Complete    | [AUTH_README.md](./AUTH_README.md)                       |
 | Query Generator     | ✅ Complete    | [QUERY_GENERATOR_README.md](./QUERY_GENERATOR_README.md) |
 | Location Dropdowns  | ✅ Complete    | [GEONAMES_SETUP.md](./GEONAMES_SETUP.md)                 |
-| Google Maps Scraper | 🚧 Coming Soon | -                                                        |
+| Google Maps Scraper | ✅ Complete    | [MAPS_SCRAPER_README.md](./MAPS_SCRAPER_README.md)       |
+| Email Scraper       | ✅ Complete    | [EMAIL_SCRAPER_COMPLETE.md](./EMAIL_SCRAPER_COMPLETE.md) |
 | Data Cleaner        | 🚧 Coming Soon | -                                                        |
 | Website Separator   | 🚧 Coming Soon | -                                                        |
-| Email Scraper       | 🚧 Coming Soon | -                                                        |
 | AI Website Analyzer | 🚧 Coming Soon | -                                                        |
 | Pipeline Dashboard  | 🚧 Coming Soon | -                                                        |
 

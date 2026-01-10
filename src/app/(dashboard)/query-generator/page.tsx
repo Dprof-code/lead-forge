@@ -37,6 +37,8 @@ interface City {
     id: string;
     cityName: string;
     geonameId: number;
+    latitude?: number | null;
+    longitude?: number | null;
     population?: number;
 }
 
@@ -423,7 +425,7 @@ export default function QueryGeneratorPage() {
                                 ⬇️ Download Full CSV ({result.count} queries)
                             </button>
                             <Link
-                                href="/dashboard/maps-scraper"
+                                href="/maps-scraper"
                                 className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-center"
                             >
                                 ▶️ Next: Scrape Google Maps

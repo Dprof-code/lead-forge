@@ -5,7 +5,7 @@ import { spawn } from "child_process";
 import path from "path";
 import fs from "fs/promises";
 
-export async function POST(request: Request) {
+export async function POST(request: Request): Promise<Response> {
   try {
     const session = await auth();
 
@@ -78,7 +78,7 @@ export async function POST(request: Request) {
       "query_generator.py"
     );
 
-    return new Promise((resolve) => {
+    return new Promise<Response>((resolve) => {
       const python = spawn("python", [pythonScript, scriptArgs], {
         env: {
           ...process.env,
@@ -149,7 +149,7 @@ export async function POST(request: Request) {
                 count: result.count,
                 preview: result.queries,
               },
-              outputFile: `/downloads/queries_${job.id}.csv`,
+              outputFile: `/api/download/queries_${job.id}.csv`,
               completedAt: new Date(),
             },
           });
@@ -160,7 +160,7 @@ export async function POST(request: Request) {
               jobId: job.id,
               count: result.count,
               preview: result.queries,
-              downloadUrl: `/downloads/queries_${job.id}.csv`,
+              downloadUrl: `/api/download/queries_${job.id}.csv`,
             })
           );
         } catch (error) {
