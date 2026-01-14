@@ -34,6 +34,7 @@ export default function MapsScraperPage() {
     const [error, setError] = useState('');
     const [result, setResult] = useState<ScrapeResult | null>(null);
     const [progress, setProgress] = useState(0);
+    const [currentJobId, setCurrentJobId] = useState<string | null>(null);
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -116,13 +117,51 @@ export default function MapsScraperPage() {
                 return;
             }
 
-            setResult(data);
-            setProgress(100);
-            setIsLoading(false);
+            // Start polling for progress
+            setCurrentJobId(data.jobId);
+            pollProgress(data.jobId);
+
         } catch (error) {
             setError('Something went wrong. Please try again.');
             setIsLoading(false);
         }
+    };
+
+    const pollProgress = async (jobId: string) => {
+        const pollInterval = setInterval(async () => {
+            try {
+                const response = await fetch(`/api/maps-scraper/progress/${jobId}`);
+                
+                if (response.ok) {
+                    const progressData = await response.json();
+                    const percentage = Math.round((progressData.current / progressData.total) * 100);
+                    setProgress(percentage);
+
+                    if (progressData.status === 'completed') {
+                        clearInterval(pollInterval);
+                        setResult(progressData.result);
+                        setIsLoading(false);
+                        setCurrentJobId(null);
+                    } else if (progressData.status === 'failed') {
+                        clearInterval(pollInterval);
+                        setError(progressData.error || 'Scraping failed');
+                        setIsLoading(false);
+                        setCurrentJobId(null);
+                    }
+                }
+            } catch (err) {
+                console.error('Error polling progress:', err);
+            }
+        }, 2000); // Poll every 2 seconds
+
+        // Cleanup interval after 30 minutes
+        setTimeout(() => {
+            clearInterval(pollInterval);
+            if (isLoading) {
+                setError('Request timed out. Please try again.');
+                setIsLoading(false);
+            }
+        }, 30 * 60 * 1000);
     };
 
     const handleDownload = () => {

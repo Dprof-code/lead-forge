@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db/prisma";
 import csv from "csv-parser";
 import { GoogleMapsScraperFast } from "@/lib/scrapers/google-maps-fast";
 import { getFilePath, ensureStorageDir } from "@/lib/file-storage";
+import { setProgress } from "@/lib/progress-tracker";
 
 interface ScrapeRequest {
   csvFile?: string; // Path to uploaded CSV
@@ -58,45 +59,55 @@ export async function POST(request: Request) {
 
     console.log(`Starting scrape of ${urlsToScrape.length} URLs...`);
 
-    try {
-      // Use fast JavaScript scraper
-      const scraper = new GoogleMapsScraperFast();
+    // Initialize progress
+    setProgress(jobId, 0, urlsToScrape.length, "running");
 
-      const businesses = await scraper.scrapeMultipleURLs({
-        urls: urlsToScrape,
-        maxResults,
-        delay: 1, // Reduced delay for faster scraping
-        headless,
-        outputFile,
-        onProgress: (current, total) => {
-          console.log(
-            `Progress: ${current}/${total} URLs (${Math.round(
-              (current / total) * 100
-            )}%)`
-          );
-        },
-      });
+    // Return job ID immediately so frontend can start polling
+    // Run scraping in background
+    (async () => {
+      try {
+        const scraper = new GoogleMapsScraperFast();
 
-      // Save to CSV
-      await GoogleMapsScraperFast.saveToCsv(businesses, outputFile);
+        const businesses = await scraper.scrapeMultipleURLs({
+          urls: urlsToScrape,
+          maxResults,
+          delay: 1,
+          headless,
+          outputFile,
+          onProgress: (current, total) => {
+            // Update progress
+            setProgress(jobId, current, total, "running");
+            console.log(
+              `Progress: ${current}/${total} URLs (${Math.round(
+                (current / total) * 100
+              )}%)`
+            );
+          },
+        });
 
-      return NextResponse.json({
-        success: true,
-        jobId,
-        count: businesses.length,
-        businesses: businesses.slice(0, 10), // Preview first 10
-        downloadUrl: `/api/download/${jobId}_results.csv`,
-      });
-    } catch (scrapeError: any) {
-      console.error("Scraping error:", scrapeError);
-      return NextResponse.json(
-        {
-          error: "Scraping failed",
-          details: scrapeError.message,
-        },
-        { status: 500 }
-      );
-    }
+        // Save to CSV
+        await GoogleMapsScraperFast.saveToCsv(businesses, outputFile);
+
+        // Mark as completed with result
+        setProgress(jobId, urlsToScrape.length, urlsToScrape.length, "completed", {
+          count: businesses.length,
+          businesses: businesses.slice(0, 10),
+          downloadUrl: `/api/download/${jobId}_results.csv`,
+        });
+
+        console.log(`✅ Scraping completed: ${businesses.length} businesses`);
+      } catch (error: any) {
+        console.error("Scraping error:", error);
+        setProgress(jobId, 0, urlsToScrape.length, "failed", null, error.message);
+      }
+    })();
+
+    // Return job ID immediately
+    return NextResponse.json({
+      success: true,
+      jobId,
+      totalUrls: urlsToScrape.length,
+    });
   } catch (error: any) {
     console.error("Maps scraper error:", error);
     return NextResponse.json(
