@@ -132,7 +132,7 @@ export async function deleteFile(filenameOrUrl: string): Promise<void> {
   if (isProductionWithCloudinary()) {
     // Extract public_id from Cloudinary URL
     // URL format: https://res.cloudinary.com/{cloud_name}/image/upload/v{version}/{public_id}.{format}
-    const publicId = filenameOrUrl.split('/').slice(-1)[0].split('.')[0];
+    const publicId = filenameOrUrl.split("/").slice(-1)[0].split(".")[0];
     await cloudinary.uploader.destroy(`lead-forge/${publicId}`);
   } else {
     // Delete from local storage
@@ -148,7 +148,7 @@ export async function deleteFile(filenameOrUrl: string): Promise<void> {
  * Legacy function - kept for backwards compatibility
  */
 export async function ensureStorageDir(): Promise<string> {
-  if (isVercelProduction()) {
+  if (isProductionWithCloudinary()) {
     return "/tmp/downloads"; // Fallback, but won't be used
   }
   return await ensureLocalStorageDir();
@@ -158,7 +158,7 @@ export async function ensureStorageDir(): Promise<string> {
  * Legacy function - kept for backwards compatibility
  */
 export function getStorageDir(): string {
-  if (isVercelProduction()) {
+  if (isProductionWithCloudinary()) {
     return "/tmp/downloads";
   }
   return getLocalStorageDir();

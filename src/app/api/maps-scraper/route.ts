@@ -8,7 +8,7 @@ import {
   getFilePath,
   ensureStorageDir,
   uploadFile,
-  isVercelProduction,
+  isProductionWithCloudinary,
 } from "@/lib/file-storage";
 import { setProgress } from "@/lib/progress-tracker";
 
@@ -45,12 +45,12 @@ export async function POST(request: Request) {
     const outputFileName = `${jobId}_results.csv`;
 
     // Only need local path in development (production doesn't use file system)
-    const outputFile = isVercelProduction()
+    const outputFile = isProductionWithCloudinary()
       ? null // No file needed in production
       : await getFilePath(outputFileName);
 
     // Ensure storage directory exists (only for local development)
-    if (!isVercelProduction()) {
+    if (!isProductionWithCloudinary()) {
       await ensureStorageDir();
     }
 
@@ -97,8 +97,8 @@ export async function POST(request: Request) {
         });
 
         // Save to CSV
-        if (isVercelProduction()) {
-          // In production, save directly to Vercel Blob (no file system)
+        if (isProductionWithCloudinary()) {
+          // In production, save directly to Cloudinary (no file system)
           const csvContent = await generateCSVContent(businesses);
           const blobUrl = await uploadFile(outputFileName, csvContent);
 

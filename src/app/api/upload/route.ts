@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   uploadFile,
-  isVercelProduction,
+  isProductionWithCloudinary,
   getFilePath,
 } from "@/lib/file-storage";
 import { writeFile } from "fs/promises";
@@ -31,8 +31,8 @@ export async function POST(request: Request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    if (isVercelProduction()) {
-      // Upload to Vercel Blob
+    if (isProductionWithCloudinary()) {
+      // Upload to Cloudinary
       const url = await uploadFile(fileName, buffer);
 
       return NextResponse.json({
