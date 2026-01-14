@@ -4,7 +4,12 @@ import fs from "fs";
 import { prisma } from "@/lib/db/prisma";
 import csv from "csv-parser";
 import { GoogleMapsScraperFast } from "@/lib/scrapers/google-maps-fast";
-import { getFilePath, ensureStorageDir, uploadFile, isVercelProduction } from "@/lib/file-storage";
+import {
+  getFilePath,
+  ensureStorageDir,
+  uploadFile,
+  isVercelProduction,
+} from "@/lib/file-storage";
 import { setProgress } from "@/lib/progress-tracker";
 
 interface ScrapeRequest {
@@ -90,7 +95,7 @@ export async function POST(request: Request) {
           // In production, save to Vercel Blob
           const csvContent = await generateCSVContent(businesses);
           const blobUrl = await uploadFile(outputFileName, csvContent);
-          
+
           // Mark as completed with result
           setProgress(
             jobId,
@@ -106,7 +111,7 @@ export async function POST(request: Request) {
         } else {
           // In development, save to local file
           await GoogleMapsScraperFast.saveToCsv(businesses, outputFile);
-          
+
           // Mark as completed with result
           setProgress(
             jobId,
@@ -161,7 +166,9 @@ async function parseUrlsFromCSV(filePath: string): Promise<string[]> {
       // Fetch from Vercel Blob
       const response = await fetch(filePath);
       if (!response.ok) {
-        throw new Error(`Failed to fetch file from Blob: ${response.statusText}`);
+        throw new Error(
+          `Failed to fetch file from Blob: ${response.statusText}`
+        );
       }
       csvContent = await response.text();
     } else {
