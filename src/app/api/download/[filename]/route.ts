@@ -37,7 +37,10 @@ export async function GET(
       contentType = "application/json";
     }
 
-    return new NextResponse(fileBuffer, {
+    // Convert Buffer to Uint8Array for NextResponse
+    const uint8Array = new Uint8Array(fileBuffer);
+
+    return new NextResponse(uint8Array, {
       headers: {
         "Content-Type": contentType,
         "Content-Disposition": `attachment; filename="${filename}"`,

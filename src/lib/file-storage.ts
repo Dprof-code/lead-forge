@@ -55,15 +55,13 @@ export async function uploadFile(
 /**
  * Get file content from Vercel Blob or local storage
  */
-export async function getFileContent(
-  filenameOrUrl: string
-): Promise<Buffer> {
+export async function getFileContent(filenameOrUrl: string): Promise<Buffer> {
   if (isVercelProduction()) {
     // Fetch from Vercel Blob URL
     const url = filenameOrUrl.startsWith("http")
       ? filenameOrUrl
       : `${process.env.BLOB_READ_WRITE_TOKEN}/${filenameOrUrl}`;
-    
+
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Failed to fetch file: ${response.statusText}`);
