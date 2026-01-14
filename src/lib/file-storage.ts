@@ -6,7 +6,20 @@ import { put, del, head } from "@vercel/blob";
  * Check if we're in Vercel production environment
  */
 export function isVercelProduction(): boolean {
-  return process.env.NODE_ENV === "production" && process.env.VERCEL === "1";
+  // Check if running on Vercel (VERCEL env var is set) or if we have BLOB token
+  const isVercel = !!process.env.VERCEL || !!process.env.BLOB_READ_WRITE_TOKEN;
+  const isProduction = process.env.NODE_ENV === "production";
+  
+  console.log("Environment check:", {
+    VERCEL: process.env.VERCEL,
+    NODE_ENV: process.env.NODE_ENV,
+    HAS_BLOB_TOKEN: !!process.env.BLOB_READ_WRITE_TOKEN,
+    isVercel,
+    isProduction,
+    result: isVercel && isProduction
+  });
+  
+  return isVercel && isProduction;
 }
 
 /**
