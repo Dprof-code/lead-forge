@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
+import { uploadFile, isVercelProduction, getFilePath } from "@/lib/file-storage";
 import { writeFile } from "fs/promises";
-import { getFilePath } from "@/lib/file-storage";
 
 export async function POST(request: Request) {
   try {
@@ -22,19 +22,31 @@ export async function POST(request: Request) {
     // Create unique filename
     const timestamp = Date.now();
     const fileName = `upload_${timestamp}_${file.name}`;
-    const filePath = await getFilePath(fileName);
-
-    // Convert file to buffer and save
+    
+    // Convert file to buffer
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    await writeFile(filePath, buffer);
 
-    // Return relative path (from public folder)
-    return NextResponse.json({
-      success: true,
-      filePath: `downloads/${fileName}`,
-      fileName,
-    });
+    if (isVercelProduction()) {
+      // Upload to Vercel Blob
+      const url = await uploadFile(fileName, buffer);
+      
+      return NextResponse.json({
+        success: true,
+        filePath: url, // Return Blob URL
+        fileName,
+      });
+    } else {
+      // Save locally
+      const filePath = await getFilePath(fileName);
+      await writeFile(filePath, buffer);
+      
+      return NextResponse.json({
+        success: true,
+        filePath: `downloads/${fileName}`,
+        fileName,
+      });
+    }
   } catch (error: any) {
     console.error("Upload error:", error);
     return NextResponse.json(

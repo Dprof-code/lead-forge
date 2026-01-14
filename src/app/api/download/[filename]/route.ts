@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import path from "path";
-import { promises as fs } from "fs";
-import { getFilePath } from "@/lib/file-storage";
+import { getFileContent, isVercelProduction } from "@/lib/file-storage";
 
 export async function GET(
   request: NextRequest,
@@ -26,17 +25,8 @@ export async function GET(
       return NextResponse.json({ error: "Invalid filename" }, { status: 400 });
     }
 
-    // Get file path using the storage utility
-    const filePath = await getFilePath(filename);
-
-    try {
-      await fs.access(filePath);
-    } catch {
-      return NextResponse.json({ error: "File not found" }, { status: 404 });
-    }
-
-    // Read and return the file
-    const fileBuffer = await fs.readFile(filePath);
+    // Get file content using the storage utility
+    const fileBuffer = await getFileContent(filename);
     const fileExtension = path.extname(filename).toLowerCase();
 
     // Determine content type

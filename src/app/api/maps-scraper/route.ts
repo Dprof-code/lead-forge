@@ -109,9 +109,9 @@ export async function POST(request: Request) {
 async function parseUrlsFromCSV(filePath: string): Promise<string[]> {
   return new Promise(async (resolve, reject) => {
     const urls: string[] = [];
-    
+
     // Use storage utility to get full path
-    const fullPath = await getFilePath(filePath.replace(/^downloads\//, ''));
+    const fullPath = await getFilePath(filePath.replace(/^downloads\//, ""));
 
     fs.createReadStream(fullPath)
       .pipe(csv())
