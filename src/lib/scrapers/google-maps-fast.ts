@@ -16,7 +16,7 @@ interface ScrapeOptions {
   maxResults?: number;
   delay?: number;
   headless?: boolean;
-  outputFile: string;
+  outputFile?: string; // Made optional for production (Blob storage)
   onProgress?: (current: number, total: number) => void;
 }
 

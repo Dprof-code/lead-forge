@@ -43,9 +43,9 @@ export async function POST(request: Request) {
       .toString(36)
       .substring(7)}`;
     const outputFileName = `${jobId}_results.csv`;
-    
+
     // Only need local path in development (production doesn't use file system)
-    const outputFile = isVercelProduction() 
+    const outputFile = isVercelProduction()
       ? null // No file needed in production
       : await getFilePath(outputFileName);
 
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
           maxResults,
           delay: 1,
           headless,
-          outputFile: outputFile || undefined, // Pass undefined in production
+          outputFile: outputFile ?? undefined, // Optional in production
           onProgress: (current, total) => {
             // Update progress
             setProgress(jobId, current, total, "running");
