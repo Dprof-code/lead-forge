@@ -131,7 +131,7 @@ export default function MapsScraperPage() {
         const pollInterval = setInterval(async () => {
             try {
                 const response = await fetch(`/api/maps-scraper/progress/${jobId}`);
-                
+
                 if (response.ok) {
                     const progressData = await response.json();
                     const percentage = Math.round((progressData.current / progressData.total) * 100);
@@ -324,8 +324,8 @@ export default function MapsScraperPage() {
                                 type="submit"
                                 disabled={!uploadedFile || isLoading}
                                 className={`flex-1 py-3 px-6 rounded-lg font-semibold text-white transition ${!uploadedFile || isLoading
-                                        ? 'bg-gray-300 cursor-not-allowed'
-                                        : 'bg-blue-600 hover:bg-blue-700'
+                                    ? 'bg-gray-300 cursor-not-allowed'
+                                    : 'bg-blue-600 hover:bg-blue-700'
                                     }`}
                             >
                                 {isLoading ? (

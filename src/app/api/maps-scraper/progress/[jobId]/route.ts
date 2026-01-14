@@ -11,10 +11,7 @@ export async function GET(
     const progress = getProgress(jobId);
 
     if (!progress) {
-      return NextResponse.json(
-        { error: "Job not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
 
     return NextResponse.json(progress);

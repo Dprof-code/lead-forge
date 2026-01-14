@@ -4,7 +4,7 @@ import fs from "fs";
 import { prisma } from "@/lib/db/prisma";
 import csv from "csv-parser";
 import { GoogleMapsScraperFast } from "@/lib/scrapers/google-maps-fast";
-import { getFilePath, ensureStorageDir } from "@/lib/file-storage";
+import { getFilePath, ensureStorageDir, uploadFile, isVercelProduction } from "@/lib/file-storage";
 import { setProgress } from "@/lib/progress-tracker";
 
 interface ScrapeRequest {
@@ -86,19 +86,52 @@ export async function POST(request: Request) {
         });
 
         // Save to CSV
-        await GoogleMapsScraperFast.saveToCsv(businesses, outputFile);
-
-        // Mark as completed with result
-        setProgress(jobId, urlsToScrape.length, urlsToScrape.length, "completed", {
-          count: businesses.length,
-          businesses: businesses.slice(0, 10),
-          downloadUrl: `/api/download/${jobId}_results.csv`,
-        });
+        if (isVercelProduction()) {
+          // In production, save to Vercel Blob
+          const csvContent = await generateCSVContent(businesses);
+          const blobUrl = await uploadFile(outputFileName, csvContent);
+          
+          // Mark as completed with result
+          setProgress(
+            jobId,
+            urlsToScrape.length,
+            urlsToScrape.length,
+            "completed",
+            {
+              count: businesses.length,
+              businesses: businesses.slice(0, 10),
+              downloadUrl: blobUrl,
+            }
+          );
+        } else {
+          // In development, save to local file
+          await GoogleMapsScraperFast.saveToCsv(businesses, outputFile);
+          
+          // Mark as completed with result
+          setProgress(
+            jobId,
+            urlsToScrape.length,
+            urlsToScrape.length,
+            "completed",
+            {
+              count: businesses.length,
+              businesses: businesses.slice(0, 10),
+              downloadUrl: `/api/download/${jobId}_results.csv`,
+            }
+          );
+        }
 
         console.log(`✅ Scraping completed: ${businesses.length} businesses`);
       } catch (error: any) {
         console.error("Scraping error:", error);
-        setProgress(jobId, 0, urlsToScrape.length, "failed", null, error.message);
+        setProgress(
+          jobId,
+          0,
+          urlsToScrape.length,
+          "failed",
+          null,
+          error.message
+        );
       }
     })();
 
@@ -118,31 +151,72 @@ export async function POST(request: Request) {
 }
 
 async function parseUrlsFromCSV(filePath: string): Promise<string[]> {
-  return new Promise(async (resolve, reject) => {
-    const urls: string[] = [];
+  const urls: string[] = [];
 
-    // Use storage utility to get full path
-    const fullPath = await getFilePath(filePath.replace(/^downloads\//, ""));
+  try {
+    let csvContent: string;
 
-    fs.createReadStream(fullPath)
-      .pipe(csv())
-      .on("data", (row) => {
-        // Look for URL column (flexible column name matching)
-        const url =
-          row["google_maps_url"] ||
-          row["Google Maps URL"] ||
-          row["url"] ||
-          row["URL"];
+    // Check if it's a Blob URL (starts with http)
+    if (filePath.startsWith("http")) {
+      // Fetch from Vercel Blob
+      const response = await fetch(filePath);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch file from Blob: ${response.statusText}`);
+      }
+      csvContent = await response.text();
+    } else {
+      // Read from local file system
+      const fullPath = await getFilePath(filePath.replace(/^downloads\//, ""));
+      const { readFile } = await import("fs/promises");
+      csvContent = await readFile(fullPath, "utf-8");
+    }
 
-        if (url && url.includes("google.com/maps")) {
-          urls.push(url);
-        }
-      })
-      .on("end", () => {
-        resolve(urls);
-      })
-      .on("error", (error) => {
-        reject(error);
-      });
+    // Parse CSV content
+    return new Promise((resolve, reject) => {
+      const { Readable } = require("stream");
+      const stream = Readable.from([csvContent]);
+
+      stream
+        .pipe(csv())
+        .on("data", (row: any) => {
+          // Look for URL column (flexible column name matching)
+          const url =
+            row["google_maps_url"] ||
+            row["Google Maps URL"] ||
+            row["url"] ||
+            row["URL"];
+
+          if (url && url.includes("google.com/maps")) {
+            urls.push(url);
+          }
+        })
+        .on("end", () => {
+          resolve(urls);
+        })
+        .on("error", (error: any) => {
+          reject(error);
+        });
+    });
+  } catch (error) {
+    throw error;
+  }
+}
+
+// Helper function to generate CSV content from businesses
+async function generateCSVContent(businesses: any[]): Promise<string> {
+  const csvHeader = "name,phone,website,rating,reviews,address,category\n";
+  const csvRows = businesses.map((b) => {
+    const escape = (str: string) => `"${str.replace(/"/g, '""')}"`;
+    return [
+      escape(b.name),
+      escape(b.phone),
+      escape(b.website),
+      escape(b.rating),
+      escape(b.reviews),
+      escape(b.address),
+      escape(b.category),
+    ].join(",");
   });
+
+  return csvHeader + csvRows.join("\n");
 }
