@@ -43,10 +43,16 @@ export async function POST(request: Request) {
       .toString(36)
       .substring(7)}`;
     const outputFileName = `${jobId}_results.csv`;
-    const outputFile = await getFilePath(outputFileName);
+    
+    // Only need local path in development (production doesn't use file system)
+    const outputFile = isVercelProduction() 
+      ? null // No file needed in production
+      : await getFilePath(outputFileName);
 
-    // Ensure storage directory exists
-    await ensureStorageDir();
+    // Ensure storage directory exists (only for local development)
+    if (!isVercelProduction()) {
+      await ensureStorageDir();
+    }
 
     // If CSV file is provided, parse it to get URLs
     let urlsToScrape: string[] = urls || [];
@@ -78,7 +84,7 @@ export async function POST(request: Request) {
           maxResults,
           delay: 1,
           headless,
-          outputFile,
+          outputFile: outputFile || undefined, // Pass undefined in production
           onProgress: (current, total) => {
             // Update progress
             setProgress(jobId, current, total, "running");
@@ -92,7 +98,7 @@ export async function POST(request: Request) {
 
         // Save to CSV
         if (isVercelProduction()) {
-          // In production, save to Vercel Blob
+          // In production, save directly to Vercel Blob (no file system)
           const csvContent = await generateCSVContent(businesses);
           const blobUrl = await uploadFile(outputFileName, csvContent);
 
@@ -110,7 +116,7 @@ export async function POST(request: Request) {
           );
         } else {
           // In development, save to local file
-          await GoogleMapsScraperFast.saveToCsv(businesses, outputFile);
+          await GoogleMapsScraperFast.saveToCsv(businesses, outputFile!);
 
           // Mark as completed with result
           setProgress(
