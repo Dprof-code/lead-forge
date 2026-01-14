@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import path from "path";
-import { getFileContent, isVercelProduction } from "@/lib/file-storage";
+import { getFileContent } from "@/lib/file-storage";
 
 export async function GET(
   request: NextRequest,
