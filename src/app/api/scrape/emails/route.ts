@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
-import path from "path";
 import {
   emailScraperWorker,
   EmailScraperJob,
 } from "@/workers/email-scraper.worker";
+import { getFilePath } from "@/lib/file-storage";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300; // 5 minutes max for API route
@@ -23,15 +23,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), "public", "uploads");
-    await fs.mkdir(uploadsDir, { recursive: true });
-
-    // Save uploaded file
+    // Save uploaded file using storage utility
     const timestamp = Date.now();
     const randomId = Math.random().toString(36).substring(7);
     const filename = `email_scrape_${timestamp}_${randomId}.csv`;
-    const filepath = path.join(uploadsDir, filename);
+    const filepath = await getFilePath(filename);
 
     const bytes = await file.arrayBuffer();
     await fs.writeFile(filepath, Buffer.from(bytes));

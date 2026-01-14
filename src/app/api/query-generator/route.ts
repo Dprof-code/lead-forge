@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { spawn } from "child_process";
 import path from "path";
-import fs from "fs/promises";
+import { getFilePath } from "@/lib/file-storage";
 
 export async function POST(request: Request): Promise<Response> {
   try {
@@ -53,10 +53,9 @@ export async function POST(request: Request): Promise<Response> {
       },
     });
 
-    // Prepare output file path
-    const outputDir = path.join(process.cwd(), "public", "downloads");
-    await fs.mkdir(outputDir, { recursive: true });
-    const outputFile = path.join(outputDir, `queries_${job.id}.csv`);
+    // Prepare output file path using storage utility
+    const outputFileName = `queries_${job.id}.csv`;
+    const outputFile = await getFilePath(outputFileName);
 
     // Prepare Python script arguments
     const scriptArgs = JSON.stringify({

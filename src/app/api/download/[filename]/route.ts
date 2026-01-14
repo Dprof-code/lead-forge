@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import path from "path";
 import { promises as fs } from "fs";
+import { getFilePath } from "@/lib/file-storage";
 
 export async function GET(
   request: NextRequest,
@@ -25,8 +26,8 @@ export async function GET(
       return NextResponse.json({ error: "Invalid filename" }, { status: 400 });
     }
 
-    // Check if file exists in public/downloads
-    const filePath = path.join(process.cwd(), "public", "downloads", filename);
+    // Get file path using the storage utility
+    const filePath = await getFilePath(filename);
 
     try {
       await fs.access(filePath);

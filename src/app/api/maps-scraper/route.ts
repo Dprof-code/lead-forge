@@ -4,6 +4,7 @@ import fs from "fs";
 import { prisma } from "@/lib/db/prisma";
 import csv from "csv-parser";
 import { GoogleMapsScraperFast } from "@/lib/scrapers/google-maps-fast";
+import { getFilePath, ensureStorageDir } from "@/lib/file-storage";
 
 interface ScrapeRequest {
   csvFile?: string; // Path to uploaded CSV
@@ -35,18 +36,11 @@ export async function POST(request: Request) {
     const jobId = `scrape_${Date.now()}_${Math.random()
       .toString(36)
       .substring(7)}`;
-    const outputFile = path.join(
-      process.cwd(),
-      "public",
-      "downloads",
-      `${jobId}_results.csv`
-    );
+    const outputFileName = `${jobId}_results.csv`;
+    const outputFile = await getFilePath(outputFileName);
 
-    // Ensure downloads directory exists
-    const downloadsDir = path.join(process.cwd(), "public", "downloads");
-    if (!fs.existsSync(downloadsDir)) {
-      fs.mkdirSync(downloadsDir, { recursive: true });
-    }
+    // Ensure storage directory exists
+    await ensureStorageDir();
 
     // If CSV file is provided, parse it to get URLs
     let urlsToScrape: string[] = urls || [];
@@ -113,9 +107,11 @@ export async function POST(request: Request) {
 }
 
 async function parseUrlsFromCSV(filePath: string): Promise<string[]> {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     const urls: string[] = [];
-    const fullPath = path.join(process.cwd(), "public", filePath);
+    
+    // Use storage utility to get full path
+    const fullPath = await getFilePath(filePath.replace(/^downloads\//, ''));
 
     fs.createReadStream(fullPath)
       .pipe(csv())
