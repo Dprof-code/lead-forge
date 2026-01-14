@@ -1,25 +1,35 @@
 import path from "path";
 import { mkdir, writeFile, readFile } from "fs/promises";
-import { put, del, head } from "@vercel/blob";
+import { v2 as cloudinary } from "cloudinary";
+
+// Configure Cloudinary
+if (process.env.CLOUDINARY_CLOUD_NAME) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
+}
 
 /**
- * Check if we're in Vercel production environment
+ * Check if we're in production environment with Cloudinary configured
  */
-export function isVercelProduction(): boolean {
-  // Check if running on Vercel (VERCEL env var is set) or if we have BLOB token
-  const isVercel = !!process.env.VERCEL || !!process.env.BLOB_READ_WRITE_TOKEN;
+export function isProductionWithCloudinary(): boolean {
+  const hasCloudinary = !!(
+    process.env.CLOUDINARY_CLOUD_NAME &&
+    process.env.CLOUDINARY_API_KEY &&
+    process.env.CLOUDINARY_API_SECRET
+  );
   const isProduction = process.env.NODE_ENV === "production";
-  
+
   console.log("Environment check:", {
-    VERCEL: process.env.VERCEL,
     NODE_ENV: process.env.NODE_ENV,
-    HAS_BLOB_TOKEN: !!process.env.BLOB_READ_WRITE_TOKEN,
-    isVercel,
+    HAS_CLOUDINARY: hasCloudinary,
     isProduction,
-    result: isVercel && isProduction
+    result: hasCloudinary && isProduction,
   });
-  
-  return isVercel && isProduction;
+
+  return hasCloudinary && isProduction;
 }
 
 /**
@@ -43,19 +53,30 @@ export async function ensureLocalStorageDir(): Promise<string> {
 }
 
 /**
- * Upload file to Vercel Blob or local storage
+ * Upload file to Cloudinary or local storage
  */
 export async function uploadFile(
   filename: string,
   data: Buffer | string
 ): Promise<string> {
-  if (isVercelProduction()) {
-    // Upload to Vercel Blob
-    const blob = await put(filename, data, {
-      access: "public",
-      addRandomSuffix: false,
+  if (isProductionWithCloudinary()) {
+    // Upload to Cloudinary
+    return new Promise((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream(
+          {
+            folder: "lead-forge",
+            public_id: filename.replace(/\.[^/.]+$/, ""), // Remove extension
+            resource_type: "auto",
+          },
+          (error, result) => {
+            if (error) reject(error);
+            else if (result) resolve(result.secure_url);
+            else reject(new Error("Upload failed"));
+          }
+        )
+        .end(data);
     });
-    return blob.url;
   } else {
     // Save locally
     const dir = await ensureLocalStorageDir();
@@ -66,14 +87,14 @@ export async function uploadFile(
 }
 
 /**
- * Get file content from Vercel Blob or local storage
+ * Get file content from Cloudinary or local storage
  */
 export async function getFileContent(filenameOrUrl: string): Promise<Buffer> {
-  if (isVercelProduction()) {
-    // Fetch from Vercel Blob URL
+  if (isProductionWithCloudinary()) {
+    // Fetch from Cloudinary URL
     const url = filenameOrUrl.startsWith("http")
       ? filenameOrUrl
-      : `${process.env.BLOB_READ_WRITE_TOKEN}/${filenameOrUrl}`;
+      : filenameOrUrl;
 
     const response = await fetch(url);
     if (!response.ok) {
@@ -94,8 +115,8 @@ export async function getFileContent(filenameOrUrl: string): Promise<Buffer> {
  * Get full file path for local development or filename for production
  */
 export async function getFilePath(filename: string): Promise<string> {
-  if (isVercelProduction()) {
-    // For Vercel, return just the filename (will be uploaded to Blob)
+  if (isProductionWithCloudinary()) {
+    // For Cloudinary, return just the filename (will be uploaded)
     return filename;
   } else {
     // For local, return full path
@@ -105,11 +126,14 @@ export async function getFilePath(filename: string): Promise<string> {
 }
 
 /**
- * Delete file from Vercel Blob or local storage
+ * Delete file from Cloudinary or local storage
  */
 export async function deleteFile(filenameOrUrl: string): Promise<void> {
-  if (isVercelProduction()) {
-    await del(filenameOrUrl);
+  if (isProductionWithCloudinary()) {
+    // Extract public_id from Cloudinary URL
+    // URL format: https://res.cloudinary.com/{cloud_name}/image/upload/v{version}/{public_id}.{format}
+    const publicId = filenameOrUrl.split('/').slice(-1)[0].split('.')[0];
+    await cloudinary.uploader.destroy(`lead-forge/${publicId}`);
   } else {
     // Delete from local storage
     const { unlink } = await import("fs/promises");
